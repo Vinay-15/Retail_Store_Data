@@ -1,5 +1,4 @@
 # app/main.py
-
 import os
 import io
 import pandas as pd
@@ -7,26 +6,22 @@ import boto3
 from fastapi import FastAPI, Header, HTTPException
 from dotenv import load_dotenv
 
-# Load environment variables from .env
+# Load .env variables
 load_dotenv()
 
-# AWS and API key from environment
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 AWS_FILE_NAME = os.getenv("AWS_FILE_NAME")
 API_KEY = os.getenv("API_KEY")
 
-# FastAPI app
 app = FastAPI(title="Retail Store Data API")
 
-# --- Security ---
 def verify_api_key(x_api_key: str = Header(None)):
     if API_KEY and x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API Key")
     return True
 
-# --- Load Dataset ---
 def load_dataset(n=None):
     """
     Load CSV from S3.
@@ -41,12 +36,11 @@ def load_dataset(n=None):
     if n:
         df = pd.read_csv(io.BytesIO(obj['Body'].read()), nrows=n)
     else:
-        # Read in chunks to avoid memory issues
+        # Load in chunks to prevent memory crash
         chunks = pd.read_csv(io.BytesIO(obj['Body'].read()), chunksize=5000)
         df = pd.concat(chunks, ignore_index=True)
     return df
 
-# --- Endpoints ---
 @app.get("/")
 def home():
     return {"message": "Retail Store Data API is running!"}
